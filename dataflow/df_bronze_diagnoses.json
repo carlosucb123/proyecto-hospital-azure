@@ -9,14 +9,24 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "sql_bronze_diagnoses",
+						"referenceName": "csv_diagnostico_intento",
 						"type": "DatasetReference"
 					},
-					"name": "source1"
+					"name": "source2"
 				}
 			],
 			"sinks": [],
-			"transformations": [],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "filter1"
+				},
+				{
+					"name": "filter2"
+				}
+			],
 			"scriptLines": [
 				"source(output(",
 				"          diagnosis_id as string,",
@@ -27,8 +37,14 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     format: 'table') ~> source1"
+				"     ignoreNoFilesFound: false) ~> source2",
+				"source2 derive(diagnosis_id = toInteger(trim(diagnosis_id)),",
+				"          admission_id = toInteger(trim(admission_id)),",
+				"          icd_code = iif(isNull(icd_code) || trim(icd_code) == '' || upper(trim(icd_code)) == 'NULL', toString(null()), replace(upper(trim(icd_code)), '-', '.')),",
+				"          diagnosis_description = iif(isNull(diagnosis_description) || trim(diagnosis_description) == '' || upper(trim(diagnosis_description)) == 'NULL', toString(null()), initCap(trim(diagnosis_description))),",
+				"          severity = iif(isNull(severity) || trim(severity) == '' || upper(trim(severity)) == 'NULL', toString(null()), initCap(trim(severity)))) ~> derivedColumn1",
+				"derivedColumn1 filter(!isNull(diagnosis_id) && !isNull(admission_id) && !isNull(icd_code) && !isNull(diagnosis_description)) ~> filter1",
+				"filter1 filter(!isNull(severity)) ~> filter2"
 			]
 		}
 	}

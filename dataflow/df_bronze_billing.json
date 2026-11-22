@@ -9,14 +9,21 @@
 			"sources": [
 				{
 					"dataset": {
-						"referenceName": "sql_bronze_hospital_biling",
+						"referenceName": "csv_facturacion_intento",
 						"type": "DatasetReference"
 					},
-					"name": "source1"
+					"name": "source2"
 				}
 			],
 			"sinks": [],
-			"transformations": [],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "filter1"
+				}
+			],
 			"scriptLines": [
 				"source(output(",
 				"          billing_id as string,",
@@ -28,8 +35,14 @@
 				"     ),",
 				"     allowSchemaDrift: true,",
 				"     validateSchema: false,",
-				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     format: 'table') ~> source1"
+				"     ignoreNoFilesFound: false) ~> source2",
+				"source2 derive(billing_id = toInteger(trim(billing_id)),",
+				"          admission_id = toInteger(trim(admission_id)),",
+				"          charge_type = case(   isNull(charge_type) || trim(charge_type) == '' || upper(trim(charge_type)) == 'NULL', toString(null()),   initCap(trim(charge_type)) ),",
+				"          amount = toDecimal(regexReplace(trim(amount), '[^0-9.-]', ''), 12, 2),",
+				"          payment_status = case(   isNull(payment_status) || trim(payment_status) == '' || upper(trim(payment_status)) == 'NULL', toString(null()),   initCap(trim(payment_status)) ),",
+				"          payment_date = coalesce(   toDate(trim(payment_date), 'yyyy-M-d'),   toDate(trim(payment_date), 'yyyy/M/d'),   toDate(trim(payment_date), 'd-MMM-yyyy'),   toDate(trim(payment_date), 'MMMM d, yyyy'),   toDate(trim(payment_date), 'MMM d, yyyy'),   toDate(trim(payment_date), 'M/d/yyyy'),   toDate(trim(payment_date), 'M-d-yyyy'),   toDate(trim(payment_date), 'M-d-yy'),   toDate(trim(payment_date), 'M/d/yy'),   toDate(trim(payment_date), 'd/M/yyyy'),   toDate(trim(payment_date), 'd-M-yyyy') )) ~> derivedColumn1",
+				"derivedColumn1 filter(!isNull(billing_id) && !isNull(admission_id) && !isNull(charge_type) && !isNull(amount) && !isNull(payment_status)) ~> filter1"
 			]
 		}
 	}
