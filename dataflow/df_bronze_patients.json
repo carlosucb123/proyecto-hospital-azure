@@ -19,6 +19,9 @@
 			"transformations": [
 				{
 					"name": "derivedColumn1"
+				},
+				{
+					"name": "filter1"
 				}
 			],
 			"scriptLines": [
@@ -38,7 +41,12 @@
 				"source2 derive(patient_id = toInteger(trim(patient_id)),",
 				"          full_name = case(   isNull(full_name) || trim(full_name) == '' || upper(trim(full_name)) == 'NULL' || upper(trim(full_name)) == 'UNKNOWN' || upper(trim(full_name)) == 'N/A', toString(null()),   initCap(trim(full_name)) ),",
 				"          gender = case(   isNull(gender) || trim(gender) == '' || upper(trim(gender)) == 'NULL' || upper(trim(gender)) == 'UNKNOWN' || upper(trim(gender)) == 'N/A', toString(null()),   lower(trim(gender)) == 'm' || lower(trim(gender)) == 'male', 'Male',   lower(trim(gender)) == 'f' || lower(trim(gender)) == 'female', 'Female',   initCap(trim(gender)) ),",
-				"          date_of_birth = coalesce(   toDate(trim(date_of_birth), 'yyyy-M-d'),   toDate(trim(date_of_birth), 'yyyy/M/d'),   toDate(trim(date_of_birth), 'MMMM d, yyyy'),   toDate(trim(date_of_birth), 'MMM d, yyyy'),   toDate(trim(date_of_birth), 'd MMM yyyy'),   toDate(trim(date_of_birth), 'd-MMM-yyyy'),   toDate(trim(date_of_birth), 'M-d-yyyy'),   toDate(trim(date_of_birth), 'M/d/yyyy'),   toDate(trim(date_of_birth), 'M-d-yy'),   toDate(trim(date_of_birth), 'M/d/yy'),   toDate(trim(date_of_birth), 'd/M/yyyy'),   toDate(trim(date_of_birth), 'd-M-yyyy') )) ~> derivedColumn1"
+				"          date_of_birth = coalesce(   toDate(trim(date_of_birth), 'yyyy-M-d'),   toDate(trim(date_of_birth), 'yyyy/M/d'),   toDate(trim(date_of_birth), 'MMMM d, yyyy'),   toDate(trim(date_of_birth), 'MMM d, yyyy'),   toDate(trim(date_of_birth), 'd MMM yyyy'),   toDate(trim(date_of_birth), 'd-MMM-yyyy'),   toDate(trim(date_of_birth), 'M-d-yyyy'),   toDate(trim(date_of_birth), 'M/d/yyyy'),   toDate(trim(date_of_birth), 'M-d-yy'),   toDate(trim(date_of_birth), 'M/d/yy'),   toDate(trim(date_of_birth), 'd/M/yyyy'),   toDate(trim(date_of_birth), 'd-M-yyyy') ),",
+				"          phone = case(   isNull(phone) || trim(phone) == '' || upper(trim(phone)) == 'NULL' || upper(trim(phone)) == 'UNKNOWN' || upper(trim(phone)) == 'N/A', toString(null()),   trim(phone) ),",
+				"          email = case(   isNull(email) || trim(email) == '' || upper(trim(email)) == 'NULL' || upper(trim(email)) == 'UNKNOWN' || upper(trim(email)) == 'N/A', toString(null()),   lower(trim(email)) ),",
+				"          address = case(   isNull(address) || trim(address) == '' || upper(trim(address)) == 'NULL' || upper(trim(address)) == 'UNKNOWN' || upper(trim(address)) == 'N/A', toString(null()),   trim(address) ),",
+				"          insurance_provider = case(   isNull(insurance_provider) || trim(insurance_provider) == '' || upper(trim(insurance_provider)) == 'NULL' || upper(trim(insurance_provider)) == 'UNKNOWN' || upper(trim(insurance_provider)) == 'N/A', toString(null()),   lower(trim(insurance_provider)) == 'cigna' || lower(trim(insurance_provider)) == 'cigna health', 'Cigna',   lower(trim(insurance_provider)) == 'aetna', 'Aetna',   lower(trim(insurance_provider)) == 'bluecross' || lower(trim(insurance_provider)) == 'blue cross', 'BlueCross',   lower(trim(insurance_provider)) == 'medicaid', 'Medicaid',   lower(trim(insurance_provider)) == 'medicare', 'Medicare',   lower(trim(insurance_provider)) == 'uhc', 'UHC',   lower(trim(insurance_provider)) == 'self pay' || lower(trim(insurance_provider)) == 'self-pay', 'Self Pay',   initCap(trim(insurance_provider)) )) ~> derivedColumn1",
+				"derivedColumn1 filter(!isNull(patient_id) && !isNull(full_name) && !isNull(gender) && !isNull(date_of_birth)) ~> filter1"
 			]
 		}
 	}
