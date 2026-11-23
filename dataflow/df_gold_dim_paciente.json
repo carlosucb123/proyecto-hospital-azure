@@ -8,10 +8,6 @@
 		"typeProperties": {
 			"sources": [
 				{
-					"dataset": {
-						"referenceName": "sql_gold_dim_paciente",
-						"type": "DatasetReference"
-					},
 					"name": "source1"
 				}
 			],
@@ -30,9 +26,7 @@
 				"          proveedor_seguro as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false,",
-				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     format: 'table') ~> source1"
+				"     validateSchema: false) ~> source1"
 			]
 		}
 	}

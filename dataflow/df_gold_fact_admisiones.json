@@ -8,10 +8,6 @@
 		"typeProperties": {
 			"sources": [
 				{
-					"dataset": {
-						"referenceName": "sql_gold_fact_admisiones",
-						"type": "DatasetReference"
-					},
 					"name": "source1"
 				}
 			],
@@ -31,9 +27,7 @@
 				"          conteo_admisiones as integer",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false,",
-				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     format: 'table') ~> source1"
+				"     validateSchema: false) ~> source1"
 			]
 		}
 	}

@@ -8,10 +8,6 @@
 		"typeProperties": {
 			"sources": [
 				{
-					"dataset": {
-						"referenceName": "sql_gold_dim_diagnostico",
-						"type": "DatasetReference"
-					},
 					"name": "source1"
 				}
 			],
@@ -25,9 +21,7 @@
 				"          nivel_severidad as string",
 				"     ),",
 				"     allowSchemaDrift: true,",
-				"     validateSchema: false,",
-				"     isolationLevel: 'READ_UNCOMMITTED',",
-				"     format: 'table') ~> source1"
+				"     validateSchema: false) ~> source1"
 			]
 		}
 	}
