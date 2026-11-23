@@ -15,7 +15,15 @@
 					"name": "source2"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "sql_silver_admissions",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "derivedColumn1"
@@ -25,6 +33,9 @@
 				},
 				{
 					"name": "filter2"
+				},
+				{
+					"name": "derivedColumn2"
 				}
 			],
 			"scriptLines": [
@@ -46,7 +57,35 @@
 				"          department = case(   lower(trim(department)) == 'onco' || lower(trim(department)) == 'oncology' || lower(trim(department)) == 'oncologyy', 'Oncology',   lower(trim(department)) == 'cardiolgy' || lower(trim(department)) == 'cardiology', 'Cardiology',   lower(trim(department)) == 'emergancy' || lower(trim(department)) == 'emergency' || lower(trim(department)) == 'er', 'Emergency',   lower(trim(department)) == 'generalsurgery' || lower(trim(department)) == 'general surgery' || lower(trim(department)) == 'gen surg', 'General Surgery',   lower(trim(department)) == 'paediatrics' || lower(trim(department)) == 'pediatrics', 'Pediatrics',   lower(trim(department)) == 'neurology', 'Neurology',   isNull(department) || trim(department) == '' || upper(trim(department)) == 'NULL', toString(null()),   trim(department) ),",
 				"          attending_doctor_id = iif(isNull(attending_doctor_id) || trim(attending_doctor_id) == '' || upper(trim(attending_doctor_id)) == 'NULL', toString(null()), trim(attending_doctor_id))) ~> derivedColumn1",
 				"derivedColumn1 filter(!isNull(admission_id) && !isNull(patient_id) && !isNull(admission_date)) ~> filter1",
-				"filter1 filter(!isNull(admission_id) && !isNull(patient_id) && !isNull(admission_date) && !isNull(discharge_date)) ~> filter2"
+				"filter1 filter(!isNull(admission_id) && !isNull(patient_id) && !isNull(admission_date) && !isNull(discharge_date)) ~> filter2",
+				"filter2 derive(patient_id = toInteger(patient_id),",
+				"          attending_doctor_id = toInteger(attending_doctor_id)) ~> derivedColumn2",
+				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          admission_id as integer,",
+				"          patient_id as integer,",
+				"          admission_date as date,",
+				"          discharge_date as date,",
+				"          department as string,",
+				"          attending_doctor_id as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          admission_id,",
+				"          patient_id,",
+				"          admission_date,",
+				"          discharge_date,",
+				"          department,",
+				"          attending_doctor_id",
+				"     )) ~> sink1"
 			]
 		}
 	}

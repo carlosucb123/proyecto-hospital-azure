@@ -15,7 +15,15 @@
 					"name": "source2"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "sql_silver_biling",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "derivedColumn1"
@@ -42,7 +50,33 @@
 				"          amount = toDecimal(regexReplace(trim(amount), '[^0-9.-]', ''), 12, 2),",
 				"          payment_status = case(   isNull(payment_status) || trim(payment_status) == '' || upper(trim(payment_status)) == 'NULL', toString(null()),   initCap(trim(payment_status)) ),",
 				"          payment_date = coalesce(   toDate(trim(payment_date), 'yyyy-M-d'),   toDate(trim(payment_date), 'yyyy/M/d'),   toDate(trim(payment_date), 'd-MMM-yyyy'),   toDate(trim(payment_date), 'MMMM d, yyyy'),   toDate(trim(payment_date), 'MMM d, yyyy'),   toDate(trim(payment_date), 'M/d/yyyy'),   toDate(trim(payment_date), 'M-d-yyyy'),   toDate(trim(payment_date), 'M-d-yy'),   toDate(trim(payment_date), 'M/d/yy'),   toDate(trim(payment_date), 'd/M/yyyy'),   toDate(trim(payment_date), 'd-M-yyyy') )) ~> derivedColumn1",
-				"derivedColumn1 filter(!isNull(billing_id) && !isNull(admission_id) && !isNull(charge_type) && !isNull(amount) && !isNull(payment_status)) ~> filter1"
+				"derivedColumn1 filter(!isNull(billing_id) && !isNull(admission_id) && !isNull(charge_type) && !isNull(amount) && !isNull(payment_status)) ~> filter1",
+				"filter1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          billing_id as integer,",
+				"          admission_id as integer,",
+				"          charge_type as string,",
+				"          amount as decimal(12,2),",
+				"          payment_status as string,",
+				"          payment_date as date",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          billing_id,",
+				"          admission_id,",
+				"          charge_type,",
+				"          amount,",
+				"          payment_status,",
+				"          payment_date",
+				"     )) ~> sink1"
 			]
 		}
 	}

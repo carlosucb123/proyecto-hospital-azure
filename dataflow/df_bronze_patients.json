@@ -15,13 +15,24 @@
 					"name": "source2"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "sql_silver_patient",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "derivedColumn1"
 				},
 				{
 					"name": "filter1"
+				},
+				{
+					"name": "filter2"
 				}
 			],
 			"scriptLines": [
@@ -46,7 +57,28 @@
 				"          email = case(   isNull(email) || trim(email) == '' || upper(trim(email)) == 'NULL' || upper(trim(email)) == 'UNKNOWN' || upper(trim(email)) == 'N/A', toString(null()),   lower(trim(email)) ),",
 				"          address = case(   isNull(address) || trim(address) == '' || upper(trim(address)) == 'NULL' || upper(trim(address)) == 'UNKNOWN' || upper(trim(address)) == 'N/A', toString(null()),   trim(address) ),",
 				"          insurance_provider = case(   isNull(insurance_provider) || trim(insurance_provider) == '' || upper(trim(insurance_provider)) == 'NULL' || upper(trim(insurance_provider)) == 'UNKNOWN' || upper(trim(insurance_provider)) == 'N/A', toString(null()),   lower(trim(insurance_provider)) == 'cigna' || lower(trim(insurance_provider)) == 'cigna health', 'Cigna',   lower(trim(insurance_provider)) == 'aetna', 'Aetna',   lower(trim(insurance_provider)) == 'bluecross' || lower(trim(insurance_provider)) == 'blue cross', 'BlueCross',   lower(trim(insurance_provider)) == 'medicaid', 'Medicaid',   lower(trim(insurance_provider)) == 'medicare', 'Medicare',   lower(trim(insurance_provider)) == 'uhc', 'UHC',   lower(trim(insurance_provider)) == 'self pay' || lower(trim(insurance_provider)) == 'self-pay', 'Self Pay',   initCap(trim(insurance_provider)) )) ~> derivedColumn1",
-				"derivedColumn1 filter(!isNull(patient_id) && !isNull(full_name) && !isNull(gender) && !isNull(date_of_birth)) ~> filter1"
+				"derivedColumn1 filter(!isNull(patient_id) && !isNull(full_name) && !isNull(gender) && !isNull(date_of_birth)) ~> filter1",
+				"filter1 filter(!isNull(phone) && !isNull(email)) ~> filter2",
+				"filter2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          patient_id as integer,",
+				"          full_name as string,",
+				"          gender as string,",
+				"          date_of_birth as date,",
+				"          phone as string,",
+				"          email as string,",
+				"          address as string,",
+				"          insurance_provider as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
 			]
 		}
 	}

@@ -15,7 +15,15 @@
 					"name": "source2"
 				}
 			],
-			"sinks": [],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "sql_silver_diagnoses",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
 			"transformations": [
 				{
 					"name": "derivedColumn1"
@@ -25,6 +33,9 @@
 				},
 				{
 					"name": "filter2"
+				},
+				{
+					"name": "derivedColumn2"
 				}
 			],
 			"scriptLines": [
@@ -44,7 +55,33 @@
 				"          diagnosis_description = iif(isNull(diagnosis_description) || trim(diagnosis_description) == '' || upper(trim(diagnosis_description)) == 'NULL', toString(null()), initCap(trim(diagnosis_description))),",
 				"          severity = iif(isNull(severity) || trim(severity) == '' || upper(trim(severity)) == 'NULL', toString(null()), initCap(trim(severity)))) ~> derivedColumn1",
 				"derivedColumn1 filter(!isNull(diagnosis_id) && !isNull(admission_id) && !isNull(icd_code) && !isNull(diagnosis_description)) ~> filter1",
-				"filter1 filter(!isNull(severity)) ~> filter2"
+				"filter1 filter(!isNull(severity)) ~> filter2",
+				"filter2 derive(diagnosis_id = toString(diagnosis_id),",
+				"          admission_id = toString(admission_id)) ~> derivedColumn2",
+				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          diagnosis_id as string,",
+				"          admission_id as string,",
+				"          icd_code as string,",
+				"          diagnosis_description as string,",
+				"          severity as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          diagnosis_id,",
+				"          admission_id,",
+				"          icd_code,",
+				"          diagnosis_description,",
+				"          severity",
+				"     )) ~> sink1"
 			]
 		}
 	}
