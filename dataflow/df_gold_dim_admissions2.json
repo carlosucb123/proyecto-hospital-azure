@@ -1,0 +1,73 @@
+{
+	"name": "df_gold_dim_admissions2",
+	"properties": {
+		"folder": {
+			"name": "gold2.0"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "sql_silver_admissions",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "sql_gold_fact_admisiones",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          admission_id_bk as integer,",
+				"          paciente_key as integer,",
+				"          departamento_key as integer,",
+				"          fecha_ingreso_key as integer,",
+				"          fecha_alta_key as integer,",
+				"          medico_id as integer,",
+				"          tipo_admision as string,",
+				"          dias_estancia as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT DISTINCT\\n    a.admission_id AS admission_id_bk,\\n\\n    COALESCE(dp.paciente_key, -1) AS paciente_key,\\n\\n    COALESCE(dep.departamento_key, -1) AS departamento_key,\\n\\n    COALESCE(df_ing.fecha_key, -1) AS fecha_ingreso_key,\\n\\n    COALESCE(df_alt.fecha_key, -1) AS fecha_alta_key,\\n\\n    a.attending_doctor_id AS medico_id,\\n\\n    COALESCE(\\n        NULLIF(LTRIM(RTRIM(a.department)), \\'\\'),\\n        \\'General\\'\\n    ) AS tipo_admision,\\n\\n    CASE\\n        WHEN a.discharge_date IS NOT NULL\\n             AND a.discharge_date >= a.admission_date\\n        THEN DATEDIFF(DAY, a.admission_date, a.discharge_date)\\n        ELSE NULL\\n    END AS dias_estancia\\n\\nFROM silver.admissions a\\n\\nLEFT JOIN gold.dim_paciente dp\\n    ON a.patient_id = dp.patient_id_bk\\n\\nLEFT JOIN gold.dim_departamento dep\\n    ON COALESCE(NULLIF(LTRIM(RTRIM(a.department)), \\'\\'), \\'General\\')\\n       = dep.nombre_departamento\\n\\nLEFT JOIN gold.dim_fecha df_ing\\n    ON a.admission_date = df_ing.fecha_completa\\n\\nLEFT JOIN gold.dim_fecha df_alt\\n    ON a.discharge_date = df_alt.fecha_completa\\n\\nWHERE a.admission_id IS NOT NULL',",
+				"     format: 'query') ~> source1",
+				"source1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          admision_key as long,",
+				"          admission_id_bk as integer,",
+				"          paciente_key as integer,",
+				"          departamento_key as integer,",
+				"          diagnostico_key as integer,",
+				"          fecha_ingreso_key as integer,",
+				"          fecha_alta_key as integer,",
+				"          medico_id as integer,",
+				"          dias_estancia as integer,",
+				"          conteo_admisiones as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          admission_id_bk = admission_id,",
+				"          paciente_key = patient_id",
+				"     )) ~> sink1"
+			]
+		}
+	}
+}

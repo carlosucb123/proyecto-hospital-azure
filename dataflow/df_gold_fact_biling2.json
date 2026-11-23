@@ -1,0 +1,67 @@
+{
+	"name": "df_gold_fact_biling2",
+	"properties": {
+		"folder": {
+			"name": "gold2.0"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "sql_silver_biling",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "sql_gold_fact_facturacion",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [],
+			"scriptLines": [
+				"source(output(",
+				"          patient_id_bk as integer,",
+				"          nombre_completo as string,",
+				"          genero as string,",
+				"          fecha_nacimiento as date,",
+				"          correo_electronico as string,",
+				"          direccion as string,",
+				"          proveedor_seguro as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     query: 'SELECT\\n    patient_id AS patient_id_bk,\\n    COALESCE(NULLIF(LTRIM(RTRIM(full_name)), \\'\\'), \\'Sin nombre\\') AS nombre_completo,\\n    COALESCE(NULLIF(LTRIM(RTRIM(gender)), \\'\\'), \\'No especificado\\') AS genero,\\n    TRY_CONVERT(DATE, date_of_birth) AS fecha_nacimiento,\\n    NULLIF(LTRIM(RTRIM(email)), \\'\\') AS correo_electronico,\\n    NULLIF(LTRIM(RTRIM(address)), \\'\\') AS direccion,\\n    COALESCE(NULLIF(LTRIM(RTRIM(insurance_provider)), \\'\\'), \\'Sin seguro\\') AS proveedor_seguro\\nFROM silver.patients',",
+				"     format: 'query') ~> source1",
+				"source1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          facturacion_key as long,",
+				"          billing_id_bk as integer,",
+				"          admission_id_bk as integer,",
+				"          paciente_key as integer,",
+				"          departamento_key as integer,",
+				"          servicio_cargo_key as integer,",
+				"          fecha_pago_key as integer,",
+				"          monto_facturado as decimal(12,2),",
+				"          conteo_transacciones as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}
